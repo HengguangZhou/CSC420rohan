@@ -105,7 +105,7 @@ if __name__ == "__main__":
 
         # Train on unlabeled data
         with tqdm(total=(len(labeled) - len(labeled) % opts.batch_size)) as t:
-            t.set_description('labeled epoch: {}/{}'.format(epoch, opts.num_epochs - 1))
+            t.set_description(f'labeled epoch: {epoch}/{opts.num_epochs - 1}')
             labeled_losses = 0
             for idx, data in enumerate(labeled_loader):
                 lr, hr = data
@@ -131,7 +131,7 @@ if __name__ == "__main__":
         # Train on labeled data
         with tqdm(total=(len(unlabeled) - len(unlabeled) % opts.batch_size)) as t:
             unlabeled_losses = 0
-            t.set_description('unlabeled epoch: {}/{}'.format(epoch, opts.num_epochs - 1))
+            t.set_description(f'unlabeled epoch: {epoch}/{opts.num_epochs - 1}')
             for idx, data in enumerate(unlabeled_loader):
                 lr, _ = data
 
@@ -151,8 +151,8 @@ if __name__ == "__main__":
 
             writer.add_scalar('Train/unlabeled_train_loss', unlabeled_losses / len(unlabeled_loader), epoch)
 
-        torch.save(sr_module.state_dict(), os.path.join(opts.weights_dir, 'epoch_sr_module_{}.pth'.format(epoch)))
-        torch.save(lr_module.state_dict(), os.path.join(opts.weights_dir, 'epoch_lr_module_{}.pth'.format(epoch)))
+        torch.save(sr_module.state_dict(), os.path.join(opts.weights_dir, f'epoch_sr_module_{epoch}.pth'))
+        torch.save(lr_module.state_dict(), os.path.join(opts.weights_dir, f'epoch_lr_module_{epoch}.pth'))
 
         # Validation
         sr_module.eval()
@@ -176,8 +176,8 @@ if __name__ == "__main__":
         epoch_lr_psnr /= len(eval_loader)
         writer.add_scalar('Val/train_upscaler PSNR', epoch_sr_psnr, epoch)
         writer.add_scalar('Val/train_downscale PSNR', epoch_lr_psnr, epoch)
-        print('eval sr psnr: {:.2f}'.format(epoch_sr_psnr))
-        print('eval lr psnr: {:.2f}'.format(epoch_lr_psnr))
+        print(f'eval sr psnr: {epoch_sr_psnr}')
+        print(f'eval lr psnr: {epoch_lr_psnr}')
 
         if epoch_sr_psnr / len(eval_loader) > best_psnr:
             best_psnr = epoch_sr_psnr
