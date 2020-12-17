@@ -4,7 +4,7 @@ from torch.nn.functional import mse_loss
 
 def compute_PSNR(x, y):
     mse = mse_loss(x, y)
-    return (20 * torch.log10(torch.ones((1))) - 10 * torch.log10(mse))[0]
+    return -10 * torch.log10(mse) + 20 * np.log10(1.)
 
 def compute_SSIM():
     pass

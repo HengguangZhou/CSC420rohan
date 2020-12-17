@@ -27,6 +27,7 @@ if __name__ == "__main__":
     parser.add_argument('--sr_module', type=str, default="FSRCNN")
     parser.add_argument('--lr_module', type=str, default="FLRCNN")
     parser.add_argument("--scale", type=int, default=2)
+    parser.add_argument('--lr', type=float, default=1e-6)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--num_epochs", type=int, default=50)
     parser.add_argument("--label_percents", type=float, default=0.3)
@@ -41,7 +42,6 @@ if __name__ == "__main__":
         device = torch.device('cuda:0')
     else:
         device = torch.device('cpu')
-
     torch.manual_seed(42)
 
     if opts.sr_module == "FSRCN":
@@ -59,7 +59,7 @@ if __name__ == "__main__":
     optimizer = optim.Adam([
         {'params': sr_module.parameters()},
         {'params': lr_module.parameters()}
-    ], lr=1e-6)
+    ], lr=opts.lr)
 
     if opts.data_type == 'h5':
         train_data = h5TrainDataset(h5_file=opts.train_data)
