@@ -4,7 +4,7 @@ import os
 import torch
 from PIL import Image
 import numpy as np
-from model import FSRCNN, FLRCNN
+from model import FSRCNN, FLRCNN, ESPCN, DESPCN
 
 from utils import compute_PSNR, preprocess, convert_ycbcr_to_rgb, convert_rgb_to_y, convert_rgb_to_ycbcr
 
@@ -13,9 +13,9 @@ if __name__ == "__main__":
     parser.add_argument('--data_type', type=str, choices=['h5', 'folder'], required=True)
     parser.add_argument('--image', type=str, required=True)
     parser.add_argument('--sr_weights', type=str, required=True)
-    parser.add_argument('--sr_module', type=str, choices=['FSRCNN'], required=True)
+    parser.add_argument('--sr_module', type=str, choices=['FSRCNN', 'ESPCN'], required=True)
     parser.add_argument('--lr_weights', type=str, required=True)
-    parser.add_argument('--lr_module', type=str, choices=['FLRCNN'], required=True)
+    parser.add_argument('--lr_module', type=str, choices=['FLRCNN', 'DESPCN'], required=True)
     parser.add_argument("--scale", type=int, default=2)
 
     opts = parser.parse_args()
@@ -29,14 +29,18 @@ if __name__ == "__main__":
         device = torch.device('cpu')
 
     if opts.sr_module == "FSRCNN":
-        sr_module = FSRCNN(scale_factor=opts.scale)
+        sr_module = FSRCNN(scale=opts.scale)
+    elif opts.sr_module == "ESPCN":
+        sr_module = ESPCN(scale=opts.scale)
     else:
-        sr_module = FSRCNN(scale_factor=opts.scale)
+        sr_module = FSRCNN(scale=opts.scale)
 
-    if opts.lr_module == "ESPCN":
-        lr_module = FLRCNN(scale_factor=opts.scale)
+    if opts.lr_module == "FLRCNN":
+        lr_module = FLRCNN(scale=opts.scale)
+    elif opts.sr_module == "DESPCN":
+        sr_module = DESPCN(scale=opts.scale)
     else:
-        lr_module = FLRCNN(scale_factor=opts.scale)
+        lr_module = FLRCNN(scale=opts.scale)
 
     sr_module = sr_module.to(device)
     lr_module = lr_module.to(device)
