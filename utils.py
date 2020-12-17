@@ -2,9 +2,14 @@ import numpy as np
 import torch
 from torch.nn.functional import mse_loss
 
+if torch.cuda.is_available():
+    device = torch.device('cuda:0')
+else:
+    device = torch.device('cpu')
+
 def compute_PSNR(x, y):
     mse = mse_loss(x, y)
-    return (20 * torch.log10(torch.ones((1))) - 10 * torch.log10(mse))[0]
+    return (20 * torch.log10(torch.ones((1), device = device)) - 10 * torch.log10(mse))[0]
 
 def compute_SSIM():
     pass

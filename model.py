@@ -2,6 +2,9 @@ import math
 from torch import nn
 import torch
 
+# Reference: CSC420 Lecture 8 Deep Learing Tutorial, Hands-on Part
+
+# Corresponding degradation model FSRCNN
 class FLRCNN(nn.Module):
     def __init__(self, scale, d=56, s=12, m=4, input_channels=1):
         super(FLRCNN, self).__init__()
@@ -18,7 +21,7 @@ class FLRCNN(nn.Module):
         x = self.expand(x)
         return self.downconv(x)
 
-
+# Model for FSRCNN
 class FSRCNN(nn.Module):
     def __init__(self, scale, d=56, s=12, m=4, input_channels=1):
         super(FSRCNN, self).__init__()
@@ -35,3 +38,92 @@ class FSRCNN(nn.Module):
         x = self.mapping(x)
         x = self.expand(x)
         return self.deconv(x)
+
+# Models for ESPCN
+class ESPCN(nn.Module):
+    def __init__(self, scale, input_channels=1):
+        super(ESPCN, self).__init__()
+        FM1_in, FM1_out, FM1_kernel_size, FM1_stride, FM1_padding = input_channels, 64, 5, 1, 2
+        FM2_in, FM2_out, FM2_kernel_size, FM2_stride, FM2_padding = 64, 32, 3, 1, 1
+        SP_in, SP_kernel_size, SP_stride, SP_padding = 32, 3, 1, 1
+        SP_out = input_channels * pow(scale, 2)
+        
+        self.featureMap1 = nn.Sequential(
+            nn.Conv2d(FM1_in, FM1_out, FM1_kernel_size, FM1_stride, FM1_padding),
+            nn.Tanh()
+        )
+
+        self.featureMap2 = nn.Sequential(
+            nn.Conv2d(FM2_in, FM2_out, FM2_kernel_size, FM2_stride, FM2_padding),
+            nn.Tanh()
+        )
+        
+        self.subPixelConv = nn.Sequential(
+            nn.Conv2d(SP_in, SP_out, SP_kernel_size, SP_stride, SP_padding),
+            nn.PixelShuffle(scale)
+        )
+
+    def forward(self, x):
+        x = self.featureMap1(x)
+        x = self.featureMap2(x)
+        x = self.subPixelConv(x)
+        return x
+
+
+# Corresponding degradation model for ESPCN
+class DESPCN(nn.Module):
+    def __init__(self, scale, input_channels=1):
+        super(DESPCN, self).__init__()
+        
+        SPR_in = input_channels * pow(scale, 2)
+        SPR_out, SPR_kernel_size, SPR_stride, SPR_padding = 32, 3, 1, 1
+        FM2R_in, FM2R_out, FM2R_kernel_size, FM2R_stride, FM2R_padding = 32, 64, 3, 1, 1
+        FM1R_in, FM1R_out, FM1R_kernel_size, FM1R_stride, FM1R_padding = 64, input_channels, 5, 1, 2
+
+        self.subPixelConvReverse = nn.Sequential(
+            PixelUnShuffle(scale),
+            nn.Conv2d(SPR_in, SPR_out, SPR_kernel_size, SPR_stride, SPR_padding)
+        )
+
+        self.featureMap2Reverse = nn.Sequential(
+            nn.Conv2d(FM2R_in, FM2R_out, FM2R_kernel_size, FM2R_stride, FM2R_padding),
+            nn.Tanh()
+        )
+
+        self.featureMap1Reverse = nn.Sequential(
+            nn.Conv2d(FM1R_in, FM1R_out, FM1R_kernel_size, FM1R_stride, FM1R_padding),
+            nn.Tanh()
+        )
+    def forward(self, x):
+            x = self.subPixelConvReverse(x)
+            x = self.featureMap2Reverse(x)
+            x = self.featureMap1Reverse(x)
+            return x
+
+
+
+
+# A pre-existing helper that does the reverse operation of torch.nn.PixelShuffle
+ 
+# Source: https://github.com/fangwei123456/PixelUnshuffle-pytorch/blob/master/PixelUnshuffle
+
+def pixel_unshuffle(input, downscale_factor):
+    c = input.shape[1]
+
+    kernel = torch.zeros(size=[downscale_factor * downscale_factor * c,
+                               1, downscale_factor, downscale_factor],
+                         device=input.device)
+    for y in range(downscale_factor):
+        for x in range(downscale_factor):
+            kernel[x + y * downscale_factor::downscale_factor*downscale_factor, 0, y, x] = 1
+
+    return F.conv2d(input, kernel, stride=downscale_factor, groups=c)
+
+class PixelUnshuffle(nn.Module):
+
+    def __init__(self, downscale_factor):
+        super(PixelUnshuffle, self).__init__()
+        self.downscale_factor = downscale_factor
+
+    def forward(self, input):
+        return pixel_unshuffle(input, self.downscale_factor)

@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from torch.utils.data import random_split
 from torch.utils.tensorboard import SummaryWriter
-from model import FSRCNN, FLRCNN
+from model import FSRCNN, FLRCNN, ESPCN, DESPCN
 
 from utils import compute_PSNR
 
@@ -44,13 +44,17 @@ if __name__ == "__main__":
 
     torch.manual_seed(42)
 
-    if opts.sr_module == "FSRCN":
+    if opts.sr_module == "FSRCNN":
         sr_module = FSRCNN(scale=opts.scale).to(device)
+    elif opts.sr_module == "ESPCN":
+        sr_module = ESPCN(scale=opts.scale).to(device)
     else:
         sr_module = FSRCNN(scale=opts.scale).to(device)
 
-    if opts.lr_module == "ESPCN":
+    if opts.lr_module == "FLRCNN":
         lr_module = FLRCNN(scale=opts.scale).to(device)
+    elif opts.sr_module == "DESPCN":
+        sr_module = DESPCN(scale=opts.scale).to(device)
     else:
         lr_module = FLRCNN(scale=opts.scale).to(device)
 
@@ -159,7 +163,7 @@ if __name__ == "__main__":
         lr_module.eval()
         epoch_sr_psnr = 0
         epoch_lr_psnr = 0
-        print(len(eval_loader))
+        # print(len(eval_loader))
         for idx, data in enumerate(eval_loader):
             lr, hr = data
 
