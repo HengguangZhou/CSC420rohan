@@ -47,6 +47,7 @@ if __name__ == "__main__":
     if opts.sr_module == "FSRCNN":
         sr_module = FSRCNN(scale=opts.scale).to(device)
     elif opts.sr_module == "ESPCN":
+        print("a")
         sr_module = ESPCN(scale=opts.scale).to(device)
     else:
         sr_module = FSRCNN(scale=opts.scale).to(device)
@@ -183,7 +184,7 @@ if __name__ == "__main__":
         print(f'eval sr psnr: {epoch_sr_psnr}')
         print(f'eval lr psnr: {epoch_lr_psnr}')
 
-        if epoch_sr_psnr / len(eval_loader) > best_psnr:
+        if epoch_sr_psnr > best_psnr:
             best_psnr = epoch_sr_psnr
             torch.save(sr_module.state_dict(), os.path.join(opts.weights_dir, 'best.pth'))
 
