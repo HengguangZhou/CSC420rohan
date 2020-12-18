@@ -31,3 +31,6 @@ python train.py --data_type 'h5'
                 --lr_module 'DVSDR'
                 --scale 2
 ```
+
+###Dataset
+Data image file are in the data directory
