@@ -51,8 +51,8 @@ if __name__ == "__main__":
     sr_module.eval()
     lr_module.eval()
 
-    sr_module.load_state_dict(torch.load(opts.sr_weights), strict = False)
-    lr_module.load_state_dict(torch.load(opts.lr_weights), strict = False)
+    sr_module.load_state_dict(torch.load(opts.sr_weights, map_location=device), strict=False)
+    lr_module.load_state_dict(torch.load(opts.lr_weights, map_location=device), strict=False)
     image = Image.open(opts.image).convert('RGB')
 
     image_width = (image.width // opts.scale) * opts.scale
