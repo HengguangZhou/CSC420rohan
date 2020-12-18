@@ -62,6 +62,8 @@ if __name__ == "__main__":
         lr, ycbcr_lr = preprocess(lr, device)
         hr, _ = preprocess(hr, device)
         bicubic_hr, ycbcr = preprocess(bicubic, device)
+        bicubic.save(opts.image.replace('.', '__bicubic_x{}.'.format(opts.scale)))
+
         print(f"bicubic PSNR: {compute_PSNR(bicubic_hr, hr)}")
 
         with torch.no_grad():
@@ -75,13 +77,13 @@ if __name__ == "__main__":
         sr = np.array([sr, ycbcr[..., 1], ycbcr[..., 2]]).transpose([1, 2, 0])
         output = np.clip(convert_ycbcr_to_rgb(sr), 0.0, 255.0).astype(np.uint8)
         output = Image.fromarray(output)
-        output.save(opts.image.replace('.', '_fsrcnn_upscale_x{}.'.format(opts.scale)))
+        output.save(opts.image.replace('.', '_' + opts.sr_module +'_upscale_x{}.'.format(opts.scale)))
 
         lr = lr.mul(255.0).cpu().numpy().squeeze(0).squeeze(0)
         lr = np.array([lr, ycbcr_lr[..., 1], ycbcr_lr[..., 2]]).transpose([1, 2, 0])
         lr = np.clip(convert_ycbcr_to_rgb(lr), 0.0, 255.0).astype(np.uint8)
         lr = Image.fromarray(lr)
-        lr.save(opts.image.replace('.', '_fsrcnn_downscale_x{}.'.format(opts.scale)))
+        lr.save(opts.image.replace('.', '_' + opts.lr_module + '_downscale_x{}.'.format(opts.scale)))
 
     else: #todo
         hr = Image.open(opts.image_file).convert('RGB')
