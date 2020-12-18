@@ -23,4 +23,15 @@ python train.py --data_type 'h5' --train_data 'data/91-image_x2.h5' --eval_data 
 ```
 
 ### Dataset
-Data image file are in the data/
+H5 Data image file are in the data/.
+If you prefer to use image folder, please organize the data repository in a similar hierarchy as below:
+```
+data
+  ---nameofdataset
+      ---train
+         ---HR
+         ---LR
+      ---eval
+         ---HR
+         ---LR
+```
