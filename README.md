@@ -19,7 +19,7 @@ python test.py --data_type 'h5' --image 'image/butterfly_GT.bmp' --sr_weights 'w
 ### Train
 To retrain the model:
 ```
-python train.py --data_type 'h5' --train_data 'data/91-image_x2.h5' --eval_data 'data/Set5_x2.h5' --sr_module 'VDSR' --lr_module 'DVSDR' --scale 2
+python train.py --data_type 'h5' --train_data 'data/91-image_x2.h5' --eval_data 'data/Set5_x2.h5' --sr_module 'VDSR' --lr_module 'DVDSR' --scale 2
 ```
 
 ### Dataset
