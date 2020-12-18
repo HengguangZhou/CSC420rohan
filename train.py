@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from torch.utils.data import random_split
 from torch.utils.tensorboard import SummaryWriter
-from model import FSRCNN, FLRCNN, ESPCN, DESPCN
+from model import FSRCNN, FLRCNN, ESPCN, DESPCN, VDSR, DVDSR, PixelUnshuffle
 
 from utils import compute_PSNR
 
@@ -47,15 +47,18 @@ if __name__ == "__main__":
     if opts.sr_module == "FSRCNN":
         sr_module = FSRCNN(scale=opts.scale).to(device)
     elif opts.sr_module == "ESPCN":
-        print("a")
         sr_module = ESPCN(scale=opts.scale).to(device)
+    elif opts.sr_module == "VDSR":
+        sr_module = VDSR(scale=opts.scale).to(device)
     else:
         sr_module = FSRCNN(scale=opts.scale).to(device)
 
     if opts.lr_module == "FLRCNN":
         lr_module = FLRCNN(scale=opts.scale).to(device)
-    elif opts.sr_module == "DESPCN":
-        sr_module = DESPCN(scale=opts.scale).to(device)
+    elif opts.lr_module == "DESPCN":
+        lr_module = DESPCN(scale=opts.scale).to(device)
+    elif opts.lr_module == "DVDSR":
+        lr_module = DVDSR(scale=opts.scale).to(device)
     else:
         lr_module = FLRCNN(scale=opts.scale).to(device)
 

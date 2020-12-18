@@ -39,7 +39,7 @@ class FSRCNN(nn.Module):
         x = self.expand(x)
         return self.deconv(x)
 
-# Models for ESPCN
+# Model for ESPCN
 class ESPCN(nn.Module):
     def __init__(self, scale, input_channels=1):
         super(ESPCN, self).__init__()
@@ -70,6 +70,33 @@ class ESPCN(nn.Module):
         return x
 
 
+# A pre-existing helper that does the reverse operation of torch.nn.PixelShuffle
+ 
+# Source: https://github.com/fangwei123456/PixelUnshuffle-pytorch/blob/master/PixelUnshuffle
+
+def pixel_unshuffle(input, downscale_factor):
+    c = input.shape[1]
+
+    kernel = torch.zeros(size=[downscale_factor * downscale_factor * c,
+                               1, downscale_factor, downscale_factor],
+                         device=input.device)
+    for y in range(downscale_factor):
+        for x in range(downscale_factor):
+            kernel[x + y * downscale_factor::downscale_factor*downscale_factor, 0, y, x] = 1
+
+    return nn.functional.conv2d(input, kernel, stride=downscale_factor, groups=c)
+
+class PixelUnshuffle(nn.Module):
+
+    def __init__(self, downscale_factor):
+        super(PixelUnshuffle, self).__init__()
+        self.downscale_factor = downscale_factor
+
+    def forward(self, input):
+        return pixel_unshuffle(input, self.downscale_factor)
+
+
+
 # Corresponding degradation model for ESPCN
 class DESPCN(nn.Module):
     def __init__(self, scale, input_channels=1):
@@ -81,7 +108,7 @@ class DESPCN(nn.Module):
         FM1R_in, FM1R_out, FM1R_kernel_size, FM1R_stride, FM1R_padding = 64, input_channels, 5, 1, 2
 
         self.subPixelConvReverse = nn.Sequential(
-            PixelUnShuffle(scale),
+            PixelUnshuffle(scale),
             nn.Conv2d(SPR_in, SPR_out, SPR_kernel_size, SPR_stride, SPR_padding)
         )
 
@@ -101,29 +128,108 @@ class DESPCN(nn.Module):
             return x
 
 
+# Model for VDSR (with half numbers of residual layers)
+class VDSR(nn.Module):
+    def __init__(self, scale, input_channels=1):
+        super(VDSR, self).__init__() 
+        self.scale = scale
+        ReLU_inplace = True
+        IL_in, IL_out, IL_kernel_size, IL_stride, IL_padding, IL_bias = 1, 64, 3, 1, 1, False
+        RL_in, RL_out, RL_kernel_size, RL_stride, RL_padding, RL_bias = 64, 64, 3, 1, 1, False
+        OL_in, OL_out, OL_kernel_size, OL_stride, OL_padding, OL_bias = 64, 1, 3, 1, 1, False
+
+        # Original Paper used 20 layers in total, we are not going to use that many residual layers
+        # We used 9 residual layers
+
+        self.inputLayer = nn.Sequential(
+            nn.Conv2d(IL_in, IL_out, IL_kernel_size, IL_stride, IL_padding, bias = IL_bias),
+            nn.ReLU(ReLU_inplace)
+        )
+        
+
+        self.resLayer = nn.Sequential(
+            nn.Conv2d(RL_in, RL_out, RL_kernel_size, RL_stride, RL_padding, bias = RL_bias),
+            nn.ReLU(ReLU_inplace),
+            nn.Conv2d(RL_in, RL_out, RL_kernel_size, RL_stride, RL_padding, bias = RL_bias),
+            nn.ReLU(ReLU_inplace),
+            nn.Conv2d(RL_in, RL_out, RL_kernel_size, RL_stride, RL_padding, bias = RL_bias),
+            nn.ReLU(ReLU_inplace),
+            nn.Conv2d(RL_in, RL_out, RL_kernel_size, RL_stride, RL_padding, bias = RL_bias),
+            nn.ReLU(ReLU_inplace),
+            nn.Conv2d(RL_in, RL_out, RL_kernel_size, RL_stride, RL_padding, bias = RL_bias),
+            nn.ReLU(ReLU_inplace),
+            nn.Conv2d(RL_in, RL_out, RL_kernel_size, RL_stride, RL_padding, bias = RL_bias),
+            nn.ReLU(ReLU_inplace),
+            nn.Conv2d(RL_in, RL_out, RL_kernel_size, RL_stride, RL_padding, bias = RL_bias),
+            nn.ReLU(ReLU_inplace),
+            nn.Conv2d(RL_in, RL_out, RL_kernel_size, RL_stride, RL_padding, bias = RL_bias),
+            nn.ReLU(ReLU_inplace),
+            nn.Conv2d(RL_in, RL_out, RL_kernel_size, RL_stride, RL_padding, bias = RL_bias),
+            nn.ReLU(ReLU_inplace)
+        )
+        self.outputLayer = nn.Sequential(
+            nn.Conv2d(OL_in, OL_out, OL_kernel_size, OL_stride, OL_padding, bias = OL_bias),
+        )
 
 
-# A pre-existing helper that does the reverse operation of torch.nn.PixelShuffle
- 
-# Source: https://github.com/fangwei123456/PixelUnshuffle-pytorch/blob/master/PixelUnshuffle
+    def forward(self, x):
+        upSample = nn.Upsample(scale_factor = self.scale, mode = 'bicubic')
+        x = upSample(x)
+        preserved = x
+        output = self.inputLayer(x)
+        output = self.resLayer(output)
+        output = self.outputLayer(output)
+        return preserved + output
 
-def pixel_unshuffle(input, downscale_factor):
-    c = input.shape[1]
+# Corresponding degradation model for VDSR (with less residual layers)
+class DVDSR(nn.Module):
+    def __init__(self, scale, input_channels=1):
+        super(DVDSR, self).__init__() 
+        self.scale = scale
+        ReLU_inplace = True
+        IL_in, IL_out, IL_kernel_size, IL_stride, IL_padding, IL_bias = 1, 64, 3, 1, 1, False
+        RL_in, RL_out, RL_kernel_size, RL_stride, RL_padding, RL_bias = 64, 64, 3, 1, 1, False
+        OL_in, OL_out, OL_kernel_size, OL_stride, OL_padding, OL_bias = 64, 1, 3, 1, 1, False
 
-    kernel = torch.zeros(size=[downscale_factor * downscale_factor * c,
-                               1, downscale_factor, downscale_factor],
-                         device=input.device)
-    for y in range(downscale_factor):
-        for x in range(downscale_factor):
-            kernel[x + y * downscale_factor::downscale_factor*downscale_factor, 0, y, x] = 1
+        # Original Paper used 20 layers in total, we are not going to use that many residual layers
 
-    return F.conv2d(input, kernel, stride=downscale_factor, groups=c)
+        self.inputLayer = nn.Sequential(
+            nn.Conv2d(IL_in, IL_out, IL_kernel_size, IL_stride, IL_padding, bias = IL_bias),
+            nn.ReLU(ReLU_inplace)
+        )
+        
 
-class PixelUnshuffle(nn.Module):
+        self.resLayer = nn.Sequential(
+            nn.Conv2d(RL_in, RL_out, RL_kernel_size, RL_stride, RL_padding, bias = RL_bias),
+            nn.ReLU(ReLU_inplace),
+            nn.Conv2d(RL_in, RL_out, RL_kernel_size, RL_stride, RL_padding, bias = RL_bias),
+            nn.ReLU(ReLU_inplace),
+            nn.Conv2d(RL_in, RL_out, RL_kernel_size, RL_stride, RL_padding, bias = RL_bias),
+            nn.ReLU(ReLU_inplace),
+            nn.Conv2d(RL_in, RL_out, RL_kernel_size, RL_stride, RL_padding, bias = RL_bias),
+            nn.ReLU(ReLU_inplace),
+            nn.Conv2d(RL_in, RL_out, RL_kernel_size, RL_stride, RL_padding, bias = RL_bias),
+            nn.ReLU(ReLU_inplace),
+            nn.Conv2d(RL_in, RL_out, RL_kernel_size, RL_stride, RL_padding, bias = RL_bias),
+            nn.ReLU(ReLU_inplace),
+            nn.Conv2d(RL_in, RL_out, RL_kernel_size, RL_stride, RL_padding, bias = RL_bias),
+            nn.ReLU(ReLU_inplace),
+            nn.Conv2d(RL_in, RL_out, RL_kernel_size, RL_stride, RL_padding, bias = RL_bias),
+            nn.ReLU(ReLU_inplace),
+            nn.Conv2d(RL_in, RL_out, RL_kernel_size, RL_stride, RL_padding, bias = RL_bias),
+            nn.ReLU(ReLU_inplace)
+        )
+        self.outputLayer = nn.Sequential(
+            nn.Conv2d(OL_in, OL_out, OL_kernel_size, OL_stride, OL_padding, bias = OL_bias),
+        )
 
-    def __init__(self, downscale_factor):
-        super(PixelUnshuffle, self).__init__()
-        self.downscale_factor = downscale_factor
+    def forward(self, x):
+        downSample = nn.Upsample(scale_factor = 1/self.scale, mode = 'bicubic')
+        preserved = x
+        output = self.inputLayer(x)
+        output = self.resLayer(output)
+        output = self.outputLayer(output)
+        output = downSample(output)
+        preserved = downSample(preserved)
+        return preserved + output
 
-    def forward(self, input):
-        return pixel_unshuffle(input, self.downscale_factor)
