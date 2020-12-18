@@ -14,6 +14,7 @@ from model import FSRCNN, FLRCNN, ESPCN, DESPCN, VDSR, DVDSR, PixelUnshuffle
 
 from utils import compute_PSNR
 
+# Used https://github.com/yjn870/FSRCNN-pytorch for reference when writing this
 if __name__ == "__main__":
     writer = SummaryWriter()
     parser = argparse.ArgumentParser()
