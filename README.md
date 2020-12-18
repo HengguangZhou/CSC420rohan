@@ -1,5 +1,5 @@
 # CSC420rohan
-###Dependencies
+### Dependencies
 - Python
 - CUDA
 - Pytorch < 1.7.0
@@ -9,7 +9,7 @@
 - tensorboard
 - h5py
 
-###Test
+### Test
 To test on single image with scale factor 2 using pretrained weights:
 ```
 python test.py --data_type 'h5'
@@ -21,7 +21,7 @@ python test.py --data_type 'h5'
                 --scale 2
 ```
 
-###Train
+### Train
 To retrain the model:
 ```
 python train.py --data_type 'h5'
@@ -32,5 +32,5 @@ python train.py --data_type 'h5'
                 --scale 2
 ```
 
-###Dataset
+### Dataset
 Data image file are in the data directory
