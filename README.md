@@ -33,4 +33,4 @@ python train.py --data_type 'h5'
 ```
 
 ### Dataset
-Data image file are in the data directory
+Data image file are in the data/
