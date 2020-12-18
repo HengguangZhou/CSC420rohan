@@ -173,7 +173,7 @@ class VDSR(nn.Module):
 
 
     def forward(self, x):
-        upSample = nn.Upsample(scale_factor = self.scale, mode = 'bicubic')
+        upSample = nn.Upsample(scale_factor=self.scale, mode='bicubic')
         x = upSample(x)
         preserved = x
         output = self.inputLayer(x)
@@ -224,7 +224,7 @@ class DVDSR(nn.Module):
         )
 
     def forward(self, x):
-        downSample = nn.Upsample(scale_factor = 1/self.scale, mode = 'bicubic')
+        downSample = nn.Upsample(scale_factor=1/self.scale, mode='bicubic')
         preserved = x
         output = self.inputLayer(x)
         output = self.resLayer(output)

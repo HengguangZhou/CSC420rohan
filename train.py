@@ -87,11 +87,12 @@ if __name__ == "__main__":
     labeled, unlabeled = random_split(dataset=train_data,
                                       lengths=[int(opts.label_percents * len(train_data)),
                                                int(np.ceil((1 - opts.label_percents) * len(train_data)))])
-    labeled_loader = DataLoader(dataset=labeled,
-                                batch_size=opts.batch_size,
-                                shuffle=True,
-                                num_workers=opts.num_workers,
-                                )
+    if len(labeled) > 0:
+        labeled_loader = DataLoader(dataset=labeled,
+                                    batch_size=opts.batch_size,
+                                    shuffle=True,
+                                    num_workers=opts.num_workers,
+                                    )
 
     unlabeled_loader = DataLoader(dataset=unlabeled,
                                 batch_size=opts.batch_size,
@@ -112,29 +113,30 @@ if __name__ == "__main__":
         lr_module.train()
 
         # Train on unlabeled data
-        with tqdm(total=(len(labeled) - len(labeled) % opts.batch_size)) as t:
-            t.set_description(f'labeled epoch: {epoch}/{opts.num_epochs - 1}')
-            labeled_losses = 0
-            for idx, data in enumerate(labeled_loader):
-                lr, hr = data
+        if len(labeled) > 0:
+            with tqdm(total=(len(labeled) - len(labeled) % opts.batch_size)) as t:
+                t.set_description(f'labeled epoch: {epoch}/{opts.num_epochs - 1}')
+                labeled_losses = 0
+                for idx, data in enumerate(labeled_loader):
+                    lr, hr = data
 
-                lr = lr.to(device)
-                hr = hr.to(device)
+                    lr = lr.to(device)
+                    hr = hr.to(device)
 
-                sr = sr_module(lr)
-                lhr = lr_module(hr)
-                loss_lr = criterion(lhr, lr)
-                loss_sr = criterion(sr, hr)
-                labeled_losses += loss_sr.item()
-                optimizer.zero_grad()
-                loss_lr.backward(retain_graph=True)
-                loss_sr.backward()
-                optimizer.step()
+                    sr = sr_module(lr)
+                    lhr = lr_module(hr)
+                    loss_lr = criterion(lhr, lr)
+                    loss_sr = criterion(sr, hr)
+                    labeled_losses += loss_sr.item()
+                    optimizer.zero_grad()
+                    loss_lr.backward(retain_graph=True)
+                    loss_sr.backward()
+                    optimizer.step()
 
-                t.set_postfix(loss='{:.6f}'.format(labeled_losses / (idx + 1)))
-                t.update(len(lr))
+                    t.set_postfix(loss='{:.6f}'.format(labeled_losses / (idx + 1)))
+                    t.update(len(lr))
 
-            writer.add_scalar('Train/labeled_train_loss', labeled_losses / len(labeled_loader), epoch)
+                writer.add_scalar('Train/labeled_train_loss', labeled_losses / len(labeled_loader), epoch)
 
         # Train on labeled data
         with tqdm(total=(len(unlabeled) - len(unlabeled) % opts.batch_size)) as t:
@@ -156,7 +158,6 @@ if __name__ == "__main__":
 
                 t.set_postfix(loss='{:.6f}'.format(unlabeled_losses / (idx + 1)))
                 t.update(len(lr))
-
             writer.add_scalar('Train/unlabeled_train_loss', unlabeled_losses / len(unlabeled_loader), epoch)
 
         torch.save(sr_module.state_dict(), os.path.join(opts.weights_dir, f'epoch_sr_module_{epoch}.pth'))
