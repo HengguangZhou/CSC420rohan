@@ -7,7 +7,6 @@ import torch.optim as optim
 from data import folderDataset, h5TrainDataset, h5EvalDataset
 from torch.utils.data.dataloader import DataLoader
 from tqdm import tqdm
-import matplotlib.pyplot as plt
 import numpy as np
 from torch.utils.data import random_split
 from torch.utils.tensorboard import SummaryWriter
@@ -21,12 +20,11 @@ if __name__ == "__main__":
     parser.add_argument('--data_type', type=str, choices=['h5', 'folder'], required=True)
     parser.add_argument('--train_data', type=str, required=True)
     parser.add_argument('--eval_data', type=str, required=True)
+    parser.add_argument("--scale", type=int, required=True)
     parser.add_argument('--weights_dir', type=str, default="weights/")
-    parser.add_argument('--checkpoints_dir', type=str, default="checkpoints/")
     parser.add_argument('--crop_size', type=int, default=255)
     parser.add_argument('--sr_module', type=str, default="FSRCNN")
     parser.add_argument('--lr_module', type=str, default="FLRCNN")
-    parser.add_argument("--scale", type=int, default=2)
     parser.add_argument('--lr', type=float, default=1e-6)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--num_epochs", type=int, default=50)
