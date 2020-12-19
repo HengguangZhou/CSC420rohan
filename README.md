@@ -22,6 +22,11 @@ To retrain the model:
 python train.py --data_type 'h5' --train_data 'data/91-image_x2.h5' --eval_data 'data/Set5_x2.h5' --sr_module 'VDSR' --lr_module 'DVDSR' --scale 2
 ```
 
+### Run ZSSR
+To train and test on an input image:
+```
+python ./ZSSR/main.py --input-img './image/butterfly_GT.bmp' 
+```
 ### Dataset
 H5 Data image file are in the data/.
 If you prefer to use image folder, please organize the data repository in a similar hierarchy as below:
