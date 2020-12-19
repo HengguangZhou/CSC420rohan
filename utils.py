@@ -6,9 +6,6 @@ def compute_PSNR(x, y):
     mse = mse_loss(x, y)
     return -10 * torch.log10(mse) + 20 * np.log10(1.)
 
-def compute_SSIM():
-    pass
-
 # Adapted from https://github.com/yjn870/FSRCNN-pytorch
 def convert_rgb_to_y(img, dim_order='hwc'):
     if dim_order == 'hwc':

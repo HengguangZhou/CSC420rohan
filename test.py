@@ -10,7 +10,6 @@ from utils import compute_PSNR, preprocess, convert_ycbcr_to_rgb, convert_rgb_to
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_type', type=str, choices=['h5', 'folder'], required=True)
     parser.add_argument('--image', type=str, required=True)
     parser.add_argument('--sr_weights', type=str, required=True)
     parser.add_argument('--sr_module', type=str, choices=['FSRCNN', 'ESPCN', 'VDSR'], required=True)
@@ -54,39 +53,34 @@ if __name__ == "__main__":
 
     image_width = (image.width // opts.scale) * opts.scale
     image_height = (image.height // opts.scale) * opts.scale
-    if opts.data_type == 'h5':
-        # h5 and ycbcr processing from https://github.com/yjn870/FSRCNN-pytorch
-        hr = image.resize((image_width, image_height), resample=Image.BICUBIC)
-        lr = hr.resize((hr.width // opts.scale, hr.height // opts.scale), resample=Image.BICUBIC)
-        bicubic = lr.resize((lr.width * opts.scale, lr.height * opts.scale), resample=Image.BICUBIC)
 
-        lr, ycbcr_lr = preprocess(lr, device)
-        hr, _ = preprocess(hr, device)
-        bicubic_hr, ycbcr = preprocess(bicubic, device)
-        bicubic.save(opts.image.replace('.', '__bicubic_x{}.'.format(opts.scale)))
+    # h5 and ycbcr processing from https://github.com/yjn870/FSRCNN-pytorch
+    hr = image.resize((image_width, image_height), resample=Image.BICUBIC)
+    lr = hr.resize((hr.width // opts.scale, hr.height // opts.scale), resample=Image.BICUBIC)
+    bicubic = lr.resize((lr.width * opts.scale, lr.height * opts.scale), resample=Image.BICUBIC)
 
-        print(f"bicubic PSNR: {compute_PSNR(bicubic_hr, hr)}")
+    lr, ycbcr_lr = preprocess(lr, device)
+    hr, _ = preprocess(hr, device)
+    bicubic_hr, ycbcr = preprocess(bicubic, device)
+    bicubic.save(opts.image.replace('.', '__bicubic_x{}.'.format(opts.scale)))
 
-        with torch.no_grad():
-            sr = sr_module(lr).clamp(0.0, 1.0)
-            lsr = lr_module(sr).clamp(0.0, 1.0)
+    print(f"bicubic PSNR: {compute_PSNR(bicubic_hr, hr)}")
 
-        print(f"SR Module PSNR: {compute_PSNR(hr, sr)}")
-        print(f"LR Module PSNR: {compute_PSNR(lr, lsr)}")
+    with torch.no_grad():
+        sr = sr_module(lr).clamp(0.0, 1.0)
+        lsr = lr_module(sr).clamp(0.0, 1.0)
 
-        sr = sr.mul(255.0).cpu().numpy().squeeze(0).squeeze(0)
-        sr = np.array([sr, ycbcr[..., 1], ycbcr[..., 2]]).transpose([1, 2, 0])
-        output = np.clip(convert_ycbcr_to_rgb(sr), 0.0, 255.0).astype(np.uint8)
-        output = Image.fromarray(output)
-        output.save(opts.image.replace('.', '_' + opts.sr_module +'_upscale_x{}.'.format(opts.scale)))
+    print(f"SR Module PSNR: {compute_PSNR(hr, sr)}")
+    print(f"LR Module PSNR: {compute_PSNR(lr, lsr)}")
 
-        lr = lr.mul(255.0).cpu().numpy().squeeze(0).squeeze(0)
-        lr = np.array([lr, ycbcr_lr[..., 1], ycbcr_lr[..., 2]]).transpose([1, 2, 0])
-        lr = np.clip(convert_ycbcr_to_rgb(lr), 0.0, 255.0).astype(np.uint8)
-        lr = Image.fromarray(lr)
-        lr.save(opts.image.replace('.', '_' + opts.lr_module + '_downscale_x{}.'.format(opts.scale)))
+    sr = sr.mul(255.0).cpu().numpy().squeeze(0).squeeze(0)
+    sr = np.array([sr, ycbcr[..., 1], ycbcr[..., 2]]).transpose([1, 2, 0])
+    output = np.clip(convert_ycbcr_to_rgb(sr), 0.0, 255.0).astype(np.uint8)
+    output = Image.fromarray(output)
+    output.save(opts.image.replace('.', '_' + opts.sr_module +'_upscale_x{}.'.format(opts.scale)))
 
-    else:
-        #todo
-        hr = Image.open(opts.image_file).convert('RGB')
-        lr = hr.resize((hr.width // opts.scale, hr.height // opts.scale), resample=Image.BICUBIC)
+    lr = lr.mul(255.0).cpu().numpy().squeeze(0).squeeze(0)
+    lr = np.array([lr, ycbcr_lr[..., 1], ycbcr_lr[..., 2]]).transpose([1, 2, 0])
+    lr = np.clip(convert_ycbcr_to_rgb(lr), 0.0, 255.0).astype(np.uint8)
+    lr = Image.fromarray(lr)
+    lr.save(opts.image.replace('.', '_' + opts.lr_module + '_downscale_x{}.'.format(opts.scale)))
