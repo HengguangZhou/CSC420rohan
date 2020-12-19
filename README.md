@@ -12,7 +12,7 @@
 ### Test
 To test on single image with scale factor 2 using pretrained weights:
 ```
-python test.py --data_type 'h5' --image 'image/butterfly_GT.bmp' --sr_weights 'weights/VDSR_sr.pth' --sr_module 'VDSR' --lr_weights 'weights/DVDSR_lr.pth' --lr_module 'DVDSR'
+python test.py --image 'image/butterfly_GT.bmp' --sr_weights 'weights/VDSR_sr.pth' --sr_module 'VDSR' --lr_weights 'weights/DVDSR_lr.pth' --lr_module 'DVDSR'
                 --scale 2
 ```
 
