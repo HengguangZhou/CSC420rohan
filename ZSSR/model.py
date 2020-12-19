@@ -24,7 +24,7 @@ class ZSSRNet(nn.Module):
 		self.output = nn.Conv2d(in_channels=hidden_channel, out_channels=3, kernel_size=kernel,
 		padding=padding, bias=bias)
 
-		self.relu = nn.ReLU(inplace=True)
+		self.relu = nn.ReLU()
     
 	def forward(self, x):
 		

@@ -26,7 +26,7 @@ The program will generate runs/ for tensorboard, and weights file in weights/
 ### Run ZSSR
 To train and test on an input image:
 ```
-python ./ZSSR/main.py --input-img './image/butterfly_GT.bmp' 
+python ./ZSSR/main.py --input-img ./image/butterfly_GT.bmp
 ```
 The program will output result.png.
 ### Dataset

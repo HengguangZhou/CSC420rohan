@@ -115,7 +115,7 @@ if __name__ == "__main__":
         mse_steps.append(i)
 
         # update lr
-        if i > 500 and i % 100 == 0:
+        if i > 500 and i % 50 == 0:
             [slope, _], [[var, _], _] = np.polyfit(mse_steps[-5:], mse_rec[-5: ], 1, cov=True)
             std = np.sqrt(var)
             print(f'slope:{slope}, STD: {std}')
@@ -148,12 +148,12 @@ if __name__ == "__main__":
                 output = cv.rotate(output, angles[-angle])  
             output_list.append(output)
     result = np.mean(output_list, axis=0)
-    print(calc_psnr(gt/255.0, result))
+    print("PSNR:", calc_psnr(gt, result))
     result *= 255.0
-    cv.imwrite('result.png', result.astype('int'))
+    cv.imwrite('./output/result.png', result.astype('int'))
 
     plt.plot(mse_rec)
-    plt.savefig('losses.jpg')
+    plt.savefig('./output/losses.jpg')
 
 
 
