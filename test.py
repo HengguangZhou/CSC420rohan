@@ -20,9 +20,6 @@ if __name__ == "__main__":
 
     opts = parser.parse_args()
 
-    if not os.path.exists("results"):
-        os.mkdir("results")
-
     if torch.cuda.is_available():
         device = torch.device('cuda:0')
     else:
@@ -89,6 +86,7 @@ if __name__ == "__main__":
         lr = Image.fromarray(lr)
         lr.save(opts.image.replace('.', '_' + opts.lr_module + '_downscale_x{}.'.format(opts.scale)))
 
-    else: #todo
+    else:
+        #todo
         hr = Image.open(opts.image_file).convert('RGB')
         lr = hr.resize((hr.width // opts.scale, hr.height // opts.scale), resample=Image.BICUBIC)
