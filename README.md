@@ -8,6 +8,7 @@
 - tqdm
 - tensorboard
 - h5py
+- matplotlib
 
 ### Test
 To test on single image with scale factor 2 using pretrained weights:
