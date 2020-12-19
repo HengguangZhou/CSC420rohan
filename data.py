@@ -3,10 +3,7 @@ import os
 from torch.utils.data import Dataset
 from PIL import Image
 from torchvision.transforms import Compose, RandomCrop, ToTensor, ToPILImage, CenterCrop, Resize
-import cv2
-import matplotlib.pyplot as plt
 from torch.utils.data.dataloader import DataLoader
-from torch.autograd import Variable
 import h5py
 
 
@@ -81,15 +78,3 @@ class h5EvalDataset(Dataset):
     def __len__(self):
         with h5py.File(self.h5_file, 'r') as f:
             return len(f['lr'])
-
-
-
-if __name__ == '__main__':
-    test = folderDataset(hr_dir=".\\dataset\\DIV2K\\train\\HR", lr_dir=None, crop_size=255, scale=2)
-    loader = DataLoader(dataset=test,
-                        batch_size=1,
-                        )
-
-    for lr, hr in loader:
-        print(lr.shape)
-        print(hr.shape)
